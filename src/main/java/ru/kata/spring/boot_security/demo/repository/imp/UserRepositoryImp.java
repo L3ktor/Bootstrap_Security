@@ -2,6 +2,7 @@ package ru.kata.spring.boot_security.demo.repository.imp;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import ru.kata.spring.boot_security.demo.model.User;
 import ru.kata.spring.boot_security.demo.repository.UserRepository;
@@ -51,6 +52,7 @@ public class UserRepositoryImp implements UserRepository {
                 .getResultList();
     }
     @Override
+    @Query("Select u from User u left join fetch u.roles where u.username=:username")
     public User getUserByUsername(String username) {
         return getEntityManager()
                 .createQuery("select u from User u where u.username = :username", User.class)
