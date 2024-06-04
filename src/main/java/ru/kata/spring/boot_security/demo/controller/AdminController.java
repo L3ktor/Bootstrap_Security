@@ -1,7 +1,6 @@
 package ru.kata.spring.boot_security.demo.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.ui.ModelMap;
@@ -30,7 +29,7 @@ public class AdminController {
     @GetMapping(value = "/all")
     public String allUsers(ModelMap model) {
         model.addAttribute("users", userService.getAllUsers());
-        return "allUsersPage";
+        return "adminPage";
     }
 
     @GetMapping(value = "/add")
@@ -42,11 +41,7 @@ public class AdminController {
 
     @PostMapping(value = "/add")
     public String postAddUser(@ModelAttribute("user") User user,
-                              @RequestParam String login,
-                              @RequestParam String password,
-                              List<Role> roles){
-        user.setLogin(login);
-        user.setPassword(password);
+                              @RequestParam List<Role> roles){
         user.getRoles().addAll(roles);
         userService.addUser(user);
         return "redirect:/users";
@@ -62,16 +57,10 @@ public class AdminController {
         return "editUser";
     }
     @PostMapping(value = "/edit")
-    public String postEditUser(@PathVariable Long id,
-                               @RequestParam String username,
-                               @RequestParam String password,
+    public String postEditUser(@ModelAttribute("user") User user,
                                @RequestParam List<Role> roles) {
-        User user = userService.getUserById(id);
-        user.setLogin(username);
-        user.setPassword(password);
         user.getRoles().addAll(roles);
         userService.editUser(user);
-
         return "redirect:/admin";
     }
 
