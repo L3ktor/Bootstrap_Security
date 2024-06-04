@@ -10,29 +10,38 @@ import ru.kata.spring.boot_security.demo.service.RoleService;
 import java.util.List;
 
 @Service
-@Transactional
 public class RoleServiceImp implements RoleService {
-    private RoleRepository roleRepository;
+    private final RoleRepository roleRepository;
 
     @Autowired
-    public void setRoleRepository(RoleRepository roleRepository) {
+    public RoleServiceImp(RoleRepository roleRepository) {
         this.roleRepository = roleRepository;
     }
 
     @Override
     public Role getRoleByName(String name) {
-        return roleRepository.getRoleByName(name);
+        return roleRepository.getRole(name);
     }
+
     @Override
     public Role getRoleById(Long id) {
         return roleRepository.getRoleById(id);
     }
+
     @Override
     public List<Role> allRoles() {
         return roleRepository.allRoles();
     }
+
     @Override
-    public Role getDefaultRole() {
-        return roleRepository.getDefaultRole();
+    @Transactional
+    public void addRole(Role role) {
+        roleRepository.addRole(role);
+    }
+
+    @Override
+    @Transactional
+    public Role getDefaultRole(){
+        return getRoleByName("ROLE_USER");
     }
 }

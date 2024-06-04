@@ -1,10 +1,9 @@
 package ru.kata.spring.boot_security.demo.service.imp;
 
-import jakarta.persistence.PersistenceContext;
-import org.springframework.context.annotation.Bean;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,56 +14,57 @@ import ru.kata.spring.boot_security.demo.service.UserService;
 import java.util.List;
 
 @Service
-@Transactional
-public class UserServiceImp implements UserService {
-    @PersistenceContext
-    private  PasswordEncoder pE;
-    private  UserRepository uR;
+public class UserServiceImp implements UserService, UserDetailsService {
 
-    public UserServiceImp(PasswordEncoder pE, UserRepository uR) {
-        this.pE = pE;
-        this.uR = uR;
-    }
-    @Bean
-    public static PasswordEncoder getPasswordEncoder() {
-        return new BCryptPasswordEncoder(8);
-    }
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<User> getAllUsers() {
-        return uR.getAllUsers();
+    @Autowired
+    @Lazy
+    public UserServiceImp(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
-
 
     @Override
     @Transactional
     public void addUser(User user) {
-        user.setPassword(pE.encode(user.getPassword()));
-        uR.addUser(user);
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        userRepository.addUser(user);
     }
 
     @Override
     @Transactional
     public void deleteUserById(Long id) {
-            uR.deleteUserById(id);
-    }
-
-    @Override
-    @Transactional
-    public User getUserById(Long id) {
-        return uR.getUserById(id);
+        userRepository.deleteUserById(id);
     }
 
 
+    //    в методе проверяется, совпадает ли текущий пароль пользователя с паролем,
+    //    который хранится в базе данных. Если нет, то пароль шифруется с помощью
+    //    кодировщика паролей. Затем обновлённый пользователь сохраняется в базе данных
+    //    с помощью метода editUser репозитория.
     @Override
     @Transactional
     public void editUser(User user) {
-        uR.addUser(user);
+        if (!user.getPassword().equals(userRepository.getUserById(user.getId()).getPassword())) {
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
+        }
+        userRepository.editUser(user);
     }
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return uR.getUserByUsername(username);
+    public User getUserById(Long id) {
+        return userRepository.getUserById(id);
+    }
+
+    @Override
+    public List<User> getAllUsers() {
+        return userRepository.getAllUsers();
+    }
+
+    @Override
+    public User loadUserByUsername(String login) {
+        return userRepository.getUserByLogin(login);
     }
 }

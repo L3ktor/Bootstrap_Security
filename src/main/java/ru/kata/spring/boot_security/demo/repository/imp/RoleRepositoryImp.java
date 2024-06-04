@@ -1,52 +1,57 @@
 package ru.kata.spring.boot_security.demo.repository.imp;
 
-import jakarta.persistence.PersistenceContext;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
+
 import ru.kata.spring.boot_security.demo.model.Role;
 import ru.kata.spring.boot_security.demo.repository.RoleRepository;
 
-import jakarta.persistence.EntityManager;
+import javax.management.relation.RoleInfoNotFoundException;
+import javax.management.relation.RoleNotFoundException;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import java.util.List;
 
 
 @Repository
 public class RoleRepositoryImp implements RoleRepository {
+    private static final Logger log = LoggerFactory.getLogger(RoleRepositoryImp.class);
+    // @PersistenceContext используется для получения экземпляра
+    // EntityManager, который представляет собой интерфейс,
+    // предоставляющий доступ к базе данных.
+    // Затем этот экземпляр использую для сохранения объекта сущности в базе данных.
     @PersistenceContext
-    private EntityManager eM;
-
-    protected EntityManager getEntityManager() {
-        return eM;
-    }
+    private EntityManager entityManager;
 
     @Override
-    public Role getRoleByName(String name) {
+    public Role getRole(String name) {
         Role role = null;
         try {
-            role = getEntityManager()
-                    .createQuery("SELECT r FROM Role r WHERE r.name=:name", Role.class)
-                    .setParameter("name", name)
-                    .getSingleResult();
-        } catch (NullPointerException e) {
-            System.out.println("Role not found");
+            role = entityManager.find(Role.class, name);
+            return role;
+        } catch (Exception e) {
+            log.error("Role not found");
         }
         return role;
     }
 
     @Override
     public Role getRoleById(long id) {
-        return getEntityManager().find(Role.class, id);
+        return entityManager.find(Role.class, id);
     }
 
     @Override
     public List<Role> allRoles() {
-        return getEntityManager()
-                .createQuery("select r from Role r", Role.class)
+        return entityManager.createQuery("SELECT r FROM Role r", Role.class)
                 .getResultList();
     }
 
     @Override
-    public Role getDefaultRole() {
-        return getRoleByName("ROLE_USER");
+    public void addRole(Role role) {
+        entityManager.persist(role);
     }
+
 }
 

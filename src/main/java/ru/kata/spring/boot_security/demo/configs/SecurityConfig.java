@@ -11,23 +11,30 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import ru.kata.spring.boot_security.demo.service.imp.UserServiceImp;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import ru.kata.spring.boot_security.demo.service.UserService;
 
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
-    private final UserServiceImp userServiceImp;
+    private final UserService userService;
     private final SuccessUserHandler successUserHandler;
 
     @Autowired
-    public SecurityConfig( UserServiceImp userServiceImp
+    public SecurityConfig( UserService userService
             , SuccessUserHandler successUserHandler) {
-        this.userServiceImp = userServiceImp;
+        this.userService = userService;
         this.successUserHandler = successUserHandler;
     }
 
+
+    @Override
+    @Autowired
+    public void configure(AuthenticationManagerBuilder auth) throws Exception {
+        auth.userDetailsService( userService).passwordEncoder(passwordEncoder());
+    }
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
@@ -46,22 +53,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .logout().logoutUrl("/logout").logoutSuccessUrl("/login");
     }
 
-
-
     @Bean
-    public DaoAuthenticationProvider daoAuthenticationProvider(){
-        DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
-        authenticationProvider.setPasswordEncoder(UserServiceImp.getPasswordEncoder());
-        authenticationProvider.setUserDetailsService(userServiceImp);
-        return authenticationProvider;
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder(8);
     }
-
-    @Override
-    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.authenticationProvider(daoAuthenticationProvider());
-    }
-
-
-
-
 }

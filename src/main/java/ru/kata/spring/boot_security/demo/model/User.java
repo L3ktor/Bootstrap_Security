@@ -1,55 +1,63 @@
 package ru.kata.spring.boot_security.demo.model;
 
-import jakarta.persistence.*;
+
+
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
+import org.hibernate.annotations.LazyCollection;
+import org.hibernate.annotations.LazyCollectionOption;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.io.Serializable;
+import javax.persistence.*;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 @Entity
-@Table(name = "t_users")
-public class User implements Serializable, UserDetails {
-
+@Table(name = "users")
+public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private Long id;
 
-    @Column(name = "username", unique = true)
-    private String username;
+    @Column(name = "name")
+    private String name;
 
-    @Column(name = "password")
-    private String password;
+    @Column(name = "surname")
+    private String surname;
 
-    @Column(name = "first_name")
-    private String firstName;
-
-    @Column(name = "last_name")
-    private String lastName;
+    @Column(name = "age")
+    private int age;
 
     @Column(name = "email")
     private String email;
 
-    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.REFRESH)
-    @JoinTable(
-            name = "users_roles",
+    @Column(name = "login")
+    private String login;
+
+    @Column(name = "password")
+    private String password;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @LazyCollection(LazyCollectionOption.EXTRA)
+    @Fetch(FetchMode.JOIN)
+    @JoinTable(name = "users_roles",
             joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "roles_id")
-    )
-    private Set<Role> roles = new HashSet<>();
+            inverseJoinColumns = @JoinColumn(name = "role_id"))
+    private Set<Role> roles;
 
     public User() {
     }
 
-    public User(String username, String password, String firstName, String lastName, String email, Set<Role> roles) {
-        this.username = username;
-        this.password = password;
-        this.firstName = firstName;
-        this.lastName = lastName;
+    public User(String name, String surname, int age, String email, String login, String password, Set<Role> roles) {
+        this.name = name;
+        this.surname = surname;
+        this.age = age;
         this.email = email;
+        this.login = login;
+        this.password = password;
         this.roles = roles;
     }
 
@@ -61,38 +69,28 @@ public class User implements Serializable, UserDetails {
         this.id = id;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
+    public String getName() {
+        return name;
     }
 
-    public void setPassword(String password) {
-        this.password = password;
+    public void setName(String name) {
+        this.name = name;
     }
 
-    @Override
-    public String getPassword() {
-        return password;
+    public String getSurname() {
+        return surname;
     }
 
-    @Override
-    public String getUsername() {
-        return username;
+    public void setSurname(String surname) {
+        this.surname = surname;
     }
 
-    public String getFirstName() {
-        return firstName;
+    public int getAge() {
+        return age;
     }
 
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
+    public void setAge(int age) {
+        this.age = age;
     }
 
     public String getEmail() {
@@ -103,17 +101,26 @@ public class User implements Serializable, UserDetails {
         this.email = email;
     }
 
-    public Set<Role> getRoles() {
-        return roles;
+    public String getLogin() {
+        return login;
     }
 
-    public void setRoles(Set<Role> roles) {
-        this.roles = roles;
+    public void setLogin(String login) {
+        this.login = login;
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return getRoles();
+        return roles;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    @Override
+    public String getUsername() {
+        return login;
     }
 
     @Override
@@ -136,35 +143,30 @@ public class User implements Serializable, UserDetails {
         return true;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        User user = (User) o;
-        return Objects.equals(id, user.id) &&
-                Objects.equals(username, user.username) &&
-                Objects.equals(password, user.password) &&
-                Objects.equals(firstName, user.firstName) &&
-                Objects.equals(lastName, user.lastName) &&
-                Objects.equals(email, user.email) &&
-                Objects.equals(roles, user.roles);
+    public void setPassword(String password) {
+        this.password = password;
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(id, username, password, firstName, lastName, email, roles);
+    public Set<Role> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(Set<Role> roles) {
+        this.roles = roles;
     }
 
     @Override
     public String toString() {
         return "User{" +
                 "id=" + id +
-                ", username='" + username + '\'' +
-                ", password='" + password + '\'' +
-                ", firstName='" + firstName + '\'' +
-                ", lastName='" + lastName + '\'' +
+                ", name='" + name + '\'' +
+                ", surname='" + surname + '\'' +
+                ", age=" + age +
                 ", email='" + email + '\'' +
-                ", roles=" + roles +
                 '}';
+    }
+
+    public void setRole(Role defaultRole) {
+        roles.add(defaultRole);
     }
 }
